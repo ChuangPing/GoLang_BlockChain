@@ -54,7 +54,7 @@ func NewBlock(data string, prevBlockHash []byte) *Block {
 		Hash:       []byte{},
 		Data:       []byte(data),
 	}
-	block.SetHash()
+	block.SetHash() // 设置当前区块的哈希
 	return &block
 }
 
@@ -86,5 +86,5 @@ func (block *Block) SetHash() {
 	blockInfo := bytes.Join(temp, []byte{})
 	//	使用拼接好的区块，使用SHA256取哈希
 	hash := sha256.Sum256(blockInfo)
-	block.Hash = hash[:]
+	block.Hash = hash[:] // 当前区块的哈希
 }

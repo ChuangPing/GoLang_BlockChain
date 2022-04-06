@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	//"GoLang_BlockChain/version1/GoLang_BlockChain/version01"
+	"fmt"
+)
 
 func main() {
 	// 初始化区块链 -- 创世区块已经在内部实现
