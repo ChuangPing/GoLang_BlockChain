@@ -18,8 +18,8 @@ const blockBucket = "blockBucket"
 
 //初始化区块链
 func NewBlockChain() *BlockChain {
-	//	创建创世区块
-	genesisBlock := GenesisBlock()
+	//	创建创世区块  --- 这是一个坑，因为只有调用生成创世区块这个函数，就会去挖矿，就是每次初始化时都会生成创世区块进行挖矿，应该是第一次才需要挖矿生成创世区块，一旦创世区块初始化完成，就不需要创建
+	//genesisBlock := GenesisBlock()
 	//	最后一个区块哈希 -- 从数据库中进行读取
 	var lasthash []byte
 	//	1.打开数据库 -- 一开始没有这个数据库文件，会自动创建blockChaindb.db 数据库文件
@@ -32,11 +32,13 @@ func NewBlockChain() *BlockChain {
 		//找到存放数据的抽屉，没有就创建 （---这个没有不会自动创建，需要判断后自动创建）
 		bucket := tx.Bucket([]byte(blockBucket))
 		if bucket == nil {
-			//	抽屉没有，自动创建
+			//	抽屉没有，自己创建 -- 说明第一次初始化
 			bucket, err = tx.CreateBucket([]byte(blockBucket))
 			if err != nil {
 				log.Panicln("创建Bucket失败", err)
 			}
+			//	创建创世区块  -- 第一次初始化才需要创世区块
+			genesisBlock := GenesisBlock()
 			//	3. 将创建的创世区块存储在数据库中：key：使用区块的hash，value：当前区块的转换成的字节, 因此要写一个将结构体转成字节的方法（Block的方法） -- 序列化，v2版本使用的bianry，当前使用gob
 			bucket.Put(genesisBlock.Hash, genesisBlock.Serialize())
 			//	4.将最后一个区块哈希存储在数据库中，需要记录最后一区块哈希  -- 即 当前区块的哈希
@@ -74,7 +76,8 @@ func (bc *BlockChain) AddBlock(data string) {
 			log.Panicln("bucket不应该为空，请检查")
 		}
 		//创建新的区块
-		block := NewBlock(data, lastHash)
+		var block *Block
+		block = NewBlock(data, lastHash)
 		//将创建好的区块添加到数据库中  hash作为key， block的字节流作为value
 		bucket.Put(block.Hash, block.Serialize())
 		//当有新的区块添加进数据库中，需要更新最后一个区块hash，就是当前区块的hash
