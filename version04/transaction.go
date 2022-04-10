@@ -74,3 +74,18 @@ func NewCoinbaseTx(address string, data string) *Transaction {
 	tx.SetHash()
 	return &tx
 }
+
+//	判断当前交易是否为挖矿交易
+func (tx *Transaction) IsCoinbase() bool {
+	//	1.交易的input只有一个 ，因为币是“凭空造的”，不是转账来的  这个input都是人为写的一些东西
+	if len(tx.TXInputs) == 1 {
+		input := tx.TXInputs[0]
+		//	对两个byte类型进行比较  -- 使用bytes的比较方法
+		if input.Index != -1 || bytes.Compare(input.TXid, []byte{}) != -1 {
+			return false
+		}
+	}
+	return true
+}
+
+//
