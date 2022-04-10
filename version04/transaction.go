@@ -21,7 +21,7 @@ type TXInput struct {
 	//	引用的output的索引值，上一个向你地址进行转账的输出交易的索引
 	Index int64
 	//	解锁脚本的签名，version04中我们使用地址来模拟（转账人的地址） -- 相当于你自己用自己的余额，向别人转账前要验证一下这个钱是否是转给你的（地址是否是你）
-	SIg string
+	Sig string
 }
 
 //	定义交易输出类型结构体
@@ -61,7 +61,7 @@ func NewCoinbaseTx(address string, data string) *Transaction {
 	//2. 无需引用交易id
 	//3. 无需引用index
 	//矿工由于挖矿时无需指定签名，所以这个sig字段可以由矿工自由填写数据，一般是填写矿池的名字
-	input := TXInput{TXid: []byte{}, Index: -1, SIg: data}
+	input := TXInput{TXid: []byte{}, Index: -1, Sig: data}
 	//	得到的钱是写入旷工的地址，因此是写在outputs中，表示账户收到的钱
 	output := TXOutput{Value: reward, PubKeyHash: address}
 	//	组装交易

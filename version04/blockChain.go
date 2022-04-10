@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/boltdb/bolt"
 	"log"
 )
@@ -67,7 +66,6 @@ func GenesisBlock(address string) *Block {
 	//	调用产生挖矿交易方法，并指定矿工地址，因为挖矿交易产生的币会转到这个地址上
 	conbaseTx := NewCoinbaseTx(address, "version04创世区块00")
 	block := NewBlock([]byte{}, []*Transaction{conbaseTx})
-	fmt.Println("%v", block)
 	return block
 }
 

@@ -48,7 +48,7 @@ func (cli *CLI) Run() {
 			data := args[3]
 			cli.CommdAddBlock(data)
 		}
-	case "printBlock":
+	case "printChain":
 		//由于这一个命令没有参数，因此经过前面的校验，到这里肯定是输入了打印区块命令
 		fmt.Println("--- 开始执行打印区块链命令 ---")
 		cli.CommdPrintBlockChain()

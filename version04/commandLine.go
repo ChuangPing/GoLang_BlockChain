@@ -6,7 +6,7 @@ import "fmt"
 
 //定义添加区块方法
 func (cli *CLI) CommdAddBlock(data string) {
-	cli.bc.AddBlock(data)
+	//cli.bc.AddBlock(data)
 	fmt.Println("--- 添加区块命令执行成功")
 }
 
@@ -21,7 +21,8 @@ func (cli *CLI) CommdPrintBlockChain() {
 		fmt.Printf("当前区块哈希：%x\n", block.Hash)
 		fmt.Printf("当前区块Nonce：%d\n", block.Nonce)
 		fmt.Printf("当前区块时间戳：%v\n", block.TimeStamp)
-		fmt.Printf("当前区块交易：%s\n", block.Data) // data实际是byte类型，但是打印时可以选择以字符的形式打印
+		fmt.Printf("区块数据 :%s\n", block.Transactions[0].TXInputs[0].Sig)
+		//fmt.Printf("当前区块交易：%s\n", block.Data) // data实际是byte类型，但是打印时可以选择以字符的形式打印
 		fmt.Printf("前一个区块的哈希：%x\n\n", block.PreHash)
 		//	退出循环条件
 		if len(block.PreHash) == 0 { // 如果当前区块存储的前一个哈希为空，说明遍历结束已经到创世区块
