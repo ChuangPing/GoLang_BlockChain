@@ -17,6 +17,7 @@ type CLI struct {
 const Mesage = `
 	addBlock --data DATA     "添加区块"
 	printChain               "正向打印区块链"
+	getBalance --address ADDRESS "获取指定地址的余额"
 `
 
 //初始化CLI
@@ -52,5 +53,12 @@ func (cli *CLI) Run() {
 		//由于这一个命令没有参数，因此经过前面的校验，到这里肯定是输入了打印区块命令
 		fmt.Println("--- 开始执行打印区块链命令 ---")
 		cli.CommdPrintBlockChain()
+	case "getBalance":
+		//getBalance --address ADDRESS "获取指定地址的余额"  -- 输入的命令：v4.exe getBalance --address ADDRESS "获取指定地址的余额"
+		if len(args) == 4 && args[2] == "--address" {
+			fmt.Println("--- 开始执行获取账余额命令 ---")
+			address := args[3]
+			cli.CommdGetBalance(address)
+		}
 	}
 }

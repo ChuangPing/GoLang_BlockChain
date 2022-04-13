@@ -38,11 +38,12 @@ func (pow *ProofOfWorlk) Run() (uint64, []byte) {
 			//	在v4版本中，我们块体是交易，因此我们并不需要将区块交易添加取哈希，我们只需要将区块的交易两两去哈希，构建merkel根。把merkelRoot
 			//添加进区块，当区块交易发送改变，会影响到melkerRoot因此我们可以用merkelRoot来取代块体的交易，因为交易发生变化会影响到merkelRoot从而影响区块哈希
 			//block.Data,
+			block.MakeMelkerRoot(),
 			block.PreHash,
 			block.Hash,
 			Uint64ToByte(block.Version),
 			Uint64ToByte(block.TimeStamp),
-			Uint64ToByte(block.DIfficult),
+			Uint64ToByte(block.Difficult),
 			// 这个Nonce随着挖矿的进行不断调整
 			Uint64ToByte(Nonce),
 		}

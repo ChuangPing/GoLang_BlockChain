@@ -7,7 +7,7 @@ import "fmt"
 //定义添加区块方法
 func (cli *CLI) CommdAddBlock(data string) {
 	//cli.bc.AddBlock(data)
-	fmt.Println("--- 添加区块命令执行成功")
+	fmt.Printf("--- 添加区块命令执行成功 ---\n\n")
 }
 
 //打印区块链方法
@@ -30,5 +30,18 @@ func (cli *CLI) CommdPrintBlockChain() {
 			break
 		}
 	}
-	fmt.Println("--- 打印区块命令执行结束 --")
+	fmt.Printf("--- 打印区块命令执行成功 ---\n\n")
+}
+
+//	查看用户余额的方法
+func (cli *CLI) CommdGetBalance(address string) {
+	var total float64
+	//	查询地址的utxo -- 与账户相关的outpus ，就是别人向他账户赚钱，但是账户没有花费
+	utxos := cli.bc.FindUtxos(address)
+	//	遍历utxos 中的，循环累加outputs中的value值 -- 即为余额
+	for _, utxo := range utxos {
+		total += utxo.Value
+	}
+	fmt.Printf("%s账户余额为%f\n", address, total)
+	fmt.Println("--- 执行获取账户余额命令成功 ---\n\n")
 }

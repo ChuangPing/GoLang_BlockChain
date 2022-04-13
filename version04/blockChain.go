@@ -96,3 +96,10 @@ func (bc *BlockChain) AddBlock(txs []*Transaction) {
 		return nil
 	})
 }
+
+//	查找对应账户可用的utxo -- 未花费的交易. 注：为了方便并没有将整个交易返回，而是只返回TXOutPut数组，方便遍历计算
+func (bc *BlockChain) FindUtxos(address string) []TXOutput {
+	//	定义需要返回utxos数组  -- TXOutPut 数组
+	var UTXO []TXOutput
+	return UTXO
+}

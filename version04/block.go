@@ -8,21 +8,21 @@ import (
 	"time"
 )
 
-//定义区块结构体
+//	定义区块结构体
 type Block struct {
 	Version    uint64
 	TimeStamp  uint64
-	DIfficult  uint64
+	Difficult  uint64
 	MerkelRoot []byte
 	Nonce      uint64
 	//Data       []byte
-	//	vesrion04 版本中，区块体中的数据保存真正的交易
+	//	version04 版本中，区块体中的数据保存真正的交易
 	Transactions []*Transaction
 	PreHash      []byte
 	Hash         []byte //当前区块的哈希
 }
 
-//工具函数 -- 将uint64转为byte
+//	工具函数 -- 将uint64转为byte
 func Uint64ToByte(num uint64) []byte {
 	var buffer bytes.Buffer
 	err := binary.Write(&buffer, binary.BigEndian, num)
@@ -33,19 +33,21 @@ func Uint64ToByte(num uint64) []byte {
 	return buffer.Bytes()
 }
 
-//初始化函数 -- 初始化区块函数,即创建区块函数  -- 创建一个区块：前一个区块哈希，区块中的交易
+//	初始化函数 -- 初始化区块函数,即创建区块函数  -- 创建一个区块：前一个区块哈希，区块中的交易
 func NewBlock(preHash []byte, txs []*Transaction) *Block {
 	//1.根据传入的参数，初始化要产生的区块
 	block := Block{
 		Version:    04,
 		PreHash:    preHash,
 		MerkelRoot: []byte{},
-		DIfficult:  0,
+		Difficult:  0,
 		TimeStamp:  uint64(time.Now().Unix()),
 		//Data:       []byte(data),	v4版本进行修改
 		Transactions: txs,
 		Hash:         []byte{},
 	}
+	//	设置区块melkerTree 根哈希
+	block.MerkelRoot = block.MakeMelkerRoot()
 	//	2。进行挖矿，确定当前区块的哈希，以及随机值
 	//初始化工作量证明函数
 	pow := NewProofOfWorlk(&block)
@@ -82,4 +84,10 @@ func DeSerialize(blockByte []byte) *Block {
 		return nil
 	}
 	return block
+}
+
+//将区块交易组织成melkerTree,并求根哈希 -- 返回melekerTree 的根哈希
+func (block *Block) MakeMelkerRoot() []byte {
+	//	TODO
+	return []byte{}
 }
