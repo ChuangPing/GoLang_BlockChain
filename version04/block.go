@@ -49,7 +49,7 @@ func NewBlock(preHash []byte, txs []*Transaction) *Block {
 	//	设置区块melkerTree 根哈希
 	block.MerkelRoot = block.MakeMelkerRoot()
 	//	2。进行挖矿，确定当前区块的哈希，以及随机值
-	//初始化工作量证明函数
+	//	初始化工作量证明函数
 	pow := NewProofOfWorlk(&block)
 	//进行挖矿
 	Nonce, Hash := pow.Run()

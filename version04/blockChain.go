@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/boltdb/bolt"
 	"log"
 )
@@ -101,5 +102,54 @@ func (bc *BlockChain) AddBlock(txs []*Transaction) {
 func (bc *BlockChain) FindUtxos(address string) []TXOutput {
 	//	定义需要返回utxos数组  -- TXOutPut 数组
 	var UTXO []TXOutput
+	//	//我们定义一个map来保存消费过的output，key是这个output的交易id，value是这个交易中索引的数组  map[交易id][]int64
+	spentOutputs := make(map[string][]int64)
+	bcIterator := bc.NewBlockChainIterator()
+	for {
+		//	1,循环遍历整个区块链中的区块
+		block := bcIterator.Next()
+		//	2. 遍历每个区块中的交易中
+		for _, tx := range block.Transactions {
+			//
+		OUTPUT:
+			//	3. 遍历outPut，找到与账户相关的outPuts -- 找到自己账户的收入(--如果不做过滤，这样会找到所有转入账户的钱，也包括转入账户已经花过的钱)
+			for i, output := range tx.TXOutputs {
+				//	在这里做一个过滤，将所有消耗过的outputs和当前的所即将添加output对比一下 如果相同，则跳过，否则添加 如果当前的交易id存在于我们已经表示的map，那么说明这个交易里面有消耗过的output
+				if spentOutputs[string(tx.TXID)] != nil {
+					//	说明当前交易在花费的outputs里面 -- 花费过
+					for _, spentOutputsIndex := range spentOutputs[string(tx.TXID)] {
+						//	取当前花费过的交易的index 判断是否与output的index是否相等，若相等则说明这个outPut是当前账户消费过不进行utxo统计
+						if int64(i) == spentOutputsIndex {
+							continue OUTPUT
+						}
+					}
+				}
+				//	判断当前output是否和账户相关， 判断output中的PubKeyHash(地址) 是否和自己的相同
+				if output.PubKeyHash == address {
+					//	将与自己相关的utxo添加到UTXO
+					UTXO = append(UTXO, output)
+				}
+			}
+			//	4.遍历当前区块的input交易， --- 找出自己花过的钱 (即花过的outputs)
+			if !tx.IsCoinbase() {
+				//	判断当前交易是否为铸币交易，因为铸币交易只有一个TXInput 交易，而且还是认为自定义写的内容不用进行循环查找里面是否有花过的Output
+				for _, input := range tx.TXInputs {
+					//	判断当前input交易中是否有当前账户花过，因为花钱产生的交易是Inputs，且花钱人会进行签名证明这是自己的钱， --当前版本签名使用的是地址4，进行判断
+					if input.Sig == address {
+						//	将当前input交易添加到消费过的oupts交易 ，用于过滤。花费的outPuts就不用添加到可用的UTXO中
+						//indexArray := spentOutputs[string(input.TXid)]
+						//indexArray = append(indexArray, input.Index)
+						spentOutputs[string(input.TXid)] = append(spentOutputs[string(input.TXid)], input.Index) // 与上面等价
+					}
+				}
+			} else {
+				fmt.Println("挖矿交易，不遍历Input交易")
+			}
+		}
+		if len(block.PreHash) == 0 {
+			//	区块链遍历完成退出
+			break
+		}
+	}
 	return UTXO
 }

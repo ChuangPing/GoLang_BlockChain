@@ -56,7 +56,7 @@ func (cli *CLI) Run() {
 	case "getBalance":
 		//getBalance --address ADDRESS "获取指定地址的余额"  -- 输入的命令：v4.exe getBalance --address ADDRESS "获取指定地址的余额"
 		if len(args) == 4 && args[2] == "--address" {
-			fmt.Println("--- 开始执行获取账余额命令 ---")
+			fmt.Println("--- 开始执行获取账户余额命令 ---")
 			address := args[3]
 			cli.CommdGetBalance(address)
 		}
