@@ -56,6 +56,8 @@ func (pow *ProofOfWorlk) Run() (uint64, []byte) {
 		if hashTemp.Cmp(pow.target) == -1 {
 			fmt.Println("--- 挖矿成功 ---")
 			//	挖矿成功将，找到的随机值，当前区块哈希返回
+			fmt.Printf("满足目标难度的哈希：%x\n", hash)
+			fmt.Printf("找到的随机值：%d\n", Nonce)
 			return Nonce, hash[:]
 		} else {
 			//	没有找到，改变Nonce

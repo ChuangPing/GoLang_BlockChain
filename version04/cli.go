@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 )
 
 //解析命令行输入的命令
@@ -15,9 +16,11 @@ type CLI struct {
 
 //定义提示常量
 const Mesage = `
+	请您输入以下命令实现对区块链进行操作：
 	addBlock --data DATA     "添加区块"
 	printChain               "正向打印区块链"
 	getBalance --address ADDRESS "获取指定地址的余额"
+	send FROM TO AMOUNT MINER DATA	"由from转mountBTC给to, 由旷工miner挖矿，同时miner旷工可以自定义写入data到区块"
 `
 
 //初始化CLI
@@ -48,6 +51,8 @@ func (cli *CLI) Run() {
 			fmt.Println("--- 执行添加区块命令 ---")
 			data := args[3]
 			cli.CommdAddBlock(data)
+		} else {
+			fmt.Println("请检查您输入的命令", Mesage)
 		}
 	case "printChain":
 		//由于这一个命令没有参数，因此经过前面的校验，到这里肯定是输入了打印区块命令
@@ -59,6 +64,23 @@ func (cli *CLI) Run() {
 			fmt.Println("--- 开始执行获取账户余额命令 ---")
 			address := args[3]
 			cli.CommdGetBalance(address)
+		} else {
+			fmt.Println("请检查您输入的命令", Mesage)
 		}
+	case "send":
+		//	v4.exe send FROM TO AMOUNT MINER DATA
+		if len(args) == 7 && args[1] == "send" {
+			fmt.Println("开始执行创建转账交易命令")
+			from := args[2]
+			to := args[3]
+			//	将string转为float64
+			amount, _ := strconv.ParseFloat(args[4], 64)
+			miner := args[5]
+			data := args[6]
+			cli.sendTransaction(from, to, amount, miner, data)
+		} else {
+			fmt.Println("请检查您输入的命令", Mesage)
+		}
+
 	}
 }
