@@ -192,20 +192,20 @@ func (bc *BlockChain) FindUTXOTransactions(address string) []*Transaction {
 				}
 			}
 			//	4.遍历当前区块的input交易， --- 找出自己花过的钱 (即花过的outputs)
-			if !tx.IsCoinbase() {
-				//	判断当前交易是否为铸币交易，因为铸币交易只有一个TXInput 交易，而且还是认为自定义写的内容不用进行循环查找里面是否有花过的Output
-				for _, input := range tx.TXInputs {
-					//	判断当前input交易中是否有当前账户花过，因为花钱产生的交易是Inputs，且花钱人会进行签名证明这是自己的钱， --当前版本签名使用的是地址4，进行判断
-					if input.Sig == address {
-						//	将当前input交易添加到消费过的oupts交易 ，用于过滤。花费的outPuts就不用添加到可用的UTXO中
-						//indexArray := spentOutputs[string(input.TXid)]
-						//indexArray = append(indexArray, input.Index)
-						spentOutputs[string(input.TXid)] = append(spentOutputs[string(input.TXid)], input.Index) // 与上面等价
-					}
+			//if !tx.IsCoinbase() { -- 虽然这样做会提高效率，但是这样会有BUG，因为每次对挖矿交易不做遍历，当挖矿交易做为下一个交易的输入，即挖矿交易的钱被花费，而有不对它进行遍历判断是否花费，导致获取当前账户余额时每次都会多加挖矿产生的钱
+			//	判断当前交易是否为铸币交易，因为铸币交易只有一个TXInput 交易，而且还是认为自定义写的内容不用进行循环查找里面是否有花过的Output
+			for _, input := range tx.TXInputs {
+				//	判断当前input交易中是否有当前账户花过，因为花钱产生的交易是Inputs，且花钱人会进行签名证明这是自己的钱， --当前版本签名使用的是地址4，进行判断
+				if input.Sig == address {
+					//	将当前input交易添加到消费过的oupts交易 ，用于过滤。花费的outPuts就不用添加到可用的UTXO中
+					//indexArray := spentOutputs[string(input.TXid)]
+					//indexArray = append(indexArray, input.Index)
+					spentOutputs[string(input.TXid)] = append(spentOutputs[string(input.TXid)], input.Index) // 与上面等价
 				}
-			} else {
-				//fmt.Println("挖矿交易，不遍历Input交易")
 			}
+			//} else {
+			//	//fmt.Println("挖矿交易，不遍历Input交易")
+			//}
 		}
 		if len(block.PreHash) == 0 {
 			//	区块链遍历完成退出
