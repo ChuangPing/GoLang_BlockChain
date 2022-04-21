@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/binary"
 	"encoding/gob"
 	"log"
@@ -88,6 +89,12 @@ func DeSerialize(blockByte []byte) *Block {
 
 //将区块交易组织成melkerTree,并求根哈希 -- 返回melekerTree 的根哈希
 func (block *Block) MakeMelkerRoot() []byte {
-	//	TODO
-	return []byte{}
+	//	这里只是简单模拟，将所有交易进行拼接在一起进行取哈希 -- 不做复杂处理
+	var transactionInfo []byte
+	for _, tx := range block.Transactions {
+		transactionInfo = append(transactionInfo, tx.TXID...)
+	}
+	//	将所有交易取哈希
+	hash := sha256.Sum256(transactionInfo)
+	return hash[:]
 }

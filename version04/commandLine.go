@@ -22,7 +22,6 @@ func (cli *CLI) CommdPrintBlockChain() {
 		fmt.Printf("当前区块Nonce：%d\n", block.Nonce)
 		fmt.Printf("当前区块时间戳：%v\n", block.TimeStamp)
 		fmt.Printf("区块数据 :%s\n", block.Transactions[0].TXInputs[0].Sig)
-		fmt.Printf("当前区块的交易：%v", block.Transactions)
 		//fmt.Printf("当前区块交易：%s\n", block.Data) // data实际是byte类型，但是打印时可以选择以字符的形式打印
 		fmt.Printf("前一个区块的哈希：%x\n\n", block.PreHash)
 		//	退出循环条件
@@ -36,11 +35,12 @@ func (cli *CLI) CommdPrintBlockChain() {
 
 //	查看用户余额的方法
 func (cli *CLI) CommdGetBalance(address string) {
-	var total float64
-	//	查询地址的utxo -- 与账户相关的outpus ，就是别人向他账户赚钱，但是账户没有花费
+	total := 0.0
+	//	查询地址的utxo -- 与账户相关的outpus ，就是别人向他账户转钱，但是账户没有花费
 	utxos := cli.bc.FindUtxos(address)
 	//	遍历utxos 中的，循环累加outputs中的value值 -- 即为余额
 	for _, utxo := range utxos {
+		fmt.Printf("utxo:%s", utxo)
 		total += utxo.Value
 	}
 	fmt.Printf("%s账户余额为%f\n", address, total)
@@ -53,6 +53,11 @@ func (cli *CLI) sendTransaction(from, to string, amount float64, miner, data str
 	coinBase := NewCoinbaseTx(miner, data)
 	//2. 创建普通交易
 	tx := NewTransaction(from, to, amount, cli.bc)
+	if tx == nil {
+		fmt.Println("无效交易请检查")
+		//阻止代码继续执行 -- 不然会进行挖矿，进而旷工得到假交易
+		return
+	}
 	//3 旷工打包区块
 	transaction := []*Transaction{coinBase, tx}
 	//4.将打包好的交易添加进区块 -- 发布区块，进行挖矿

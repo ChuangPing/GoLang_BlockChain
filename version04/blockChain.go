@@ -98,72 +98,37 @@ func (bc *BlockChain) AddBlock(txs []*Transaction) {
 	})
 }
 
-//	定义账户最需要的utxos方法
+//	定义账户需要的utxos方法 -- 找到满足转账要求的最低可用的utxo集合
 func (bc *BlockChain) FindNeedUTXOs(from string, amount float64) (map[string][]uint64, float64) {
-	//var txs []*Transaction //存储所有包含utxo交易集合
-	//我们定义一个map来保存消费过的output，key是这个output的交易id，value是这个交易中索引的数组
-	spentOutputs := make(map[string][]int64)
 	//	定义满足需要的utxos
 	utxos := make(map[string][]uint64)
 	//	找到的余额
 	var total float64
-	//	遍历整个区块链的交易，找到账户（from）相关的outPuts交易，找自己的可用余额
-	it := bc.NewBlockChainIterator() // 初始化迭代器
-	for {
-		//	1.遍历区块
-		block := it.Next()
-		//	2.遍历每个区块中的交易
-		for _, tx := range block.Transactions {
-		OUTPUT:
-			//3. 遍历output，找到和自己相关的utxo(在添加output之前检查一下是否已经消耗过)
-			for i, output := range tx.TXOutputs {
-				//在这里做一个过滤，将所有消耗过的outputs和当前的所即将添加output对比一下  如果相同，则跳过，否则添加 如果当前的交易id存在于我们已经表示的map，那么说明这个交易里面有消耗过的output
-				if spentOutputs[string(tx.TXID)] != nil {
-					//	说明spendOutputs map里面不为空，当前交易有账户消耗过的utxo，遍历spendOutputs
-					for _, j := range spentOutputs[string(tx.TXID)] {
-						if j == int64(i) {
-							//	spentOutputs 里面存的交易id与当前Output序号一样，说明当前交易已经被当做input使用，不需要加入utxo集合因此跳过当前交易循环
-							continue OUTPUT
-						}
+	//	调用FindUTXOTransactions 获取与账户相关包含utxo集合的交易
+	txs := bc.FindUTXOTransactions(from)
+	//	对账户所有包含utxo交易进行遍历
+	for _, tx := range txs {
+		for i, output := range tx.TXOutputs {
+			if output.PubKeyHash == from {
+				//	先判断，需要的余额（amount）与找到的余额（total）
+				if total < amount {
+					//	将outputs添加进账户可用的utxos  -- 这里可做改进，将交易Id tx.TXID也要返回，方便函数复用
+					total += output.Value
+					utxos[string(tx.TXID)] = append(utxos[string(tx.TXID)], uint64(i))
+					if total > amount {
+						//	已经找到足够的余额 -- 直接退出，提高效率
+						return utxos, total
 					}
-
 				}
-				//	判断当前交易的outpus里面的地址（签名），是否与账户相同
-				if output.PubKeyHash == from {
-					//	先判断，需要的余额（amount）与找到的余额（total）
-					if total < amount {
-						//	将outputs添加进账户可用的utxos  -- 这里可做改进，将交易Id tx.TXID也要返回，方便函数复用
-						total += output.Value
-						utxos[string(tx.TXID)] = append(utxos[string(tx.TXID)], uint64(i))
-						if total > amount {
-							//	已经找到足够的余额 -- 直接退出，提高效率
-							return utxos, total
-						}
-					}
+				if total < amount {
 					//	正常情况走不到这一步，因为在里面就结束循环
 					fmt.Printf("不满足转账金额,当前总额：%f， 目标金额: %f\n", total, amount)
+					return utxos, total
 				}
-				// 判断当前交易的是否是铸币交易，铸币交易不用遍历inputs，因为inputs是认为设置。 不用指定币的来源，因此inputs交易可用由旷工指定一些自定义内容
-				if !tx.IsCoinbase() {
-					//	4.遍历当前交易的inputs，如果是和当前交易有关，则说明当前交易有花费，需要添加进spentOutpus
-					for _, input := range tx.TXInputs {
-						//	判断，花钱交易的签名是否是当前账户，如果是，说明这个钱就是当前账户花费，需要添加进spentUtxo集合
-						if input.Sig == from {
-							spentOutputs[string(input.TXid)] = append(spentOutputs[string(input.TXid)], input.Index)
-						}
-					}
-				} else {
-					//fmt.Println("当前交易为挖矿(铸币交易),不用遍历inputs交易")
-				}
+
 			}
 		}
-		if len(block.PreHash) == 0 {
-			//迭代器，迭代区块链结束
-			break
-		}
-
 	}
-
 	//// 调用FindUtxos 找到进行转账账户可用到的utxo -- 找自己可用的余额 -- 即找与自己相关的oupts交易
 	//txs := bc.FindUtxos(from)  -- 这个函数不够好，没有返回交易的ID
 	//// 遍历交易  对账户余额进行累加
@@ -180,6 +145,22 @@ func (bc *BlockChain) FindNeedUTXOs(from string, amount float64) (map[string][]u
 func (bc *BlockChain) FindUtxos(address string) []TXOutput {
 	//	定义需要返回utxos数组  -- TXOutPut 数组
 	var UTXO []TXOutput
+	txs := bc.FindUTXOTransactions(address)
+	for _, tx := range txs {
+		for _, output := range tx.TXOutputs {
+			if address == output.PubKeyHash {
+				UTXO = append(UTXO, output)
+			}
+		}
+	}
+
+	return UTXO
+}
+
+//	定义寻找寻找账户utxo集合的方法
+func (bc *BlockChain) FindUTXOTransactions(address string) []*Transaction {
+	//	存储所有包含utxo交易集合
+	var txs []*Transaction
 	//	//我们定义一个map来保存消费过的output，key是这个output的交易id，value是这个交易中索引的数组  map[交易id][]int64
 	spentOutputs := make(map[string][]int64)
 	bcIterator := bc.NewBlockChainIterator()
@@ -205,7 +186,9 @@ func (bc *BlockChain) FindUtxos(address string) []TXOutput {
 				//	判断当前output是否和账户相关， 判断output中的PubKeyHash(地址) 是否和自己的相同
 				if output.PubKeyHash == address {
 					//	将与自己相关的utxo添加到UTXO
-					UTXO = append(UTXO, output)
+					//UTXO = append(UTXO, output)
+					//	将包含账户的utxo的交易集合存放在交易切片中
+					txs = append(txs, tx)
 				}
 			}
 			//	4.遍历当前区块的input交易， --- 找出自己花过的钱 (即花过的outputs)
@@ -229,5 +212,5 @@ func (bc *BlockChain) FindUtxos(address string) []TXOutput {
 			break
 		}
 	}
-	return UTXO
+	return txs
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/gob"
+	"fmt"
 	"log"
 )
 
@@ -88,6 +89,11 @@ func (tx *Transaction) IsCoinbase() bool {
 func NewTransaction(from, to string, amount float64, bc *BlockChain) *Transaction {
 	//1.	获取自己账户(from)中满足当前交易可用的最合理utxo  -- 最合理：只要找到当前账户可用的余额大于等于要花费的钱就不用再继续找，可以进行转账
 	utxos, resValue := bc.FindNeedUTXOs(from, amount)
+	if resValue < amount {
+		//	说明当前账户余额不足
+		fmt.Println("当前交易失败，余额不足")
+		return nil
+	}
 	//	定义交易组成 -- 一个交易：输出， 输入
 	inputs := []TXInput{}   // 输出交易类型切片
 	outputs := []TXOutput{} //	输入交易类型切片
