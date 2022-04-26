@@ -1,0 +1,5 @@
+
+rm  v4.exe
+rm  *.db
+go build -o block
+
