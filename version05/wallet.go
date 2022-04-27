@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
+	"fmt"
 	"github.com/btcsuite/btcutil/base58"
 	"golang.org/x/crypto/ripemd160"
 	"log"
@@ -45,7 +47,7 @@ func (wallet *Wallet) NewAddress() string {
 	//	在比特币中地址，是由用户公钥导出的
 	publicKey := wallet.PubKey
 	//	对公钥取rip160哈希
-	rip160HashValue := pubKeyRip160Hash(publicKey)
+	rip160HashValue := PubKeyHash(publicKey)
 	version := byte(00)
 	//	拼接version
 	payLoad := append([]byte{version}, rip160HashValue...)
@@ -60,7 +62,7 @@ func (wallet *Wallet) NewAddress() string {
 }
 
 //	对公钥进行rip160哈希
-func pubKeyRip160Hash(data []byte) []byte {
+func PubKeyHash(data []byte) []byte {
 	//	先对公钥进行取sha256哈希
 	hash := sha256.Sum256(data)
 	//理解为编码器     下面可能会报错使用命令解决：   go get -v github.com/btcsuite/btcd
@@ -83,4 +85,22 @@ func CheckSum(data []byte) []byte {
 	//	获取前四个字节的校验码
 	checkCode := hash2[:4]
 	return checkCode
+}
+
+//	验证地址是否合法
+func IsValidAddress(address string) bool {
+	//	将address进行解码拿到payLoad 与 checkSum,然后再由payLoa调用CheckSum 生成checksum00,判断生成checksum00 == checkSum
+	//	1.解码
+	addressBytes := base58.Decode(address)
+	if len(addressBytes) < 4 {
+		fmt.Printf("地址：%s非法！！\n", address)
+		return false
+	}
+	//	2.取数据
+	payLoad := addressBytes[:len(addressBytes)-4] //checkSum长度为4个字节
+	checkSum := addressBytes[len(addressBytes)-4:]
+	//	3.由payLoad生成checkSum1
+	checkSum1 := CheckSum(payLoad)
+	//	4.返回比较结果
+	return bytes.Equal(checkSum, checkSum1)
 }
